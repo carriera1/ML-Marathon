@@ -1,0 +1,95 @@
+---
+title: "Marathon"
+author: "Aidan Carrier"
+format: pdf
+---
+
+# 1. Problem Formulation and Significance
+
+## Problem Statement:
+The Boston Marathon is one of the most prestigious marathons in the world, but marathon runners as a whole may fail to realize the significance of using machine learning methods to improve their times. 
+
+
+## Significance:
+Using data from a previous year, we can identify patterns and predictors of better times that could be used in helping future runners achieve faster runs.
+
+## Dataset Description:
+The data was collected from 2015, and contains 26,598 rows and 25 columns. The columns include split times every 5K, demographics such as age and gender, and overall/gender finish time. All 26,598 rows represent a runner who finished the race. 
+
+# 2. Exploratory Data Analysis
+
+## Data Exploration
+```{python}
+import pandas as pd
+import numpy as np
+```
+
+```{python}
+# Read in data, sometimes "-" is used instead of NA
+marathon = pd.read_csv("marathon_results_2015.csv", na_values=["-"]) 
+```
+
+I noticed that a lot of columns didn’t use NA values, but instead used “-” to show empty values.
+
+```{python}
+print("Shape: ", marathon.shape)
+#print("Data Types for each column: ",marathon.dtypes)
+#print("NA counts: \n", marathon.isnull().sum())
+```
+
+```{python}
+def time_to_sec(time):
+  if pd.isna(time):
+    return np.nan
+  else:
+    time = str(time)
+    lst = time.split(":")
+    return int(lst[0])*3600 + int(lst[1])*60 + int(lst[2]) 
+
+time_cols = ['5K', '10K', '15K', '20K', 'Half', '25K',
+             '30K', '35K', '40K', 'Official Time']
+
+for col in time_cols:
+  marathon[col] = marathon[col].apply(time_to_sec)
+```
+
+The values of the split times were in H:MM:SS format, and have to be converted to numeric values to be used in models.
+
+```{python}
+marathon = marathon.drop(columns=['Unnamed: 0', 'Bib', 'Name', 'City', 'State', 'Country', 'Citizen', 'Unnamed: 9', 'Division', 'Proj Time', 'Overall', 'Gender', 'Pace'])
+```
+Drop columns with either too many NA values, or not relevant to the problem.
+
+```{python}
+marathon.describe().T.round(1)
+```
+This shows the summary statistics of the numeric data. This can be used to see the means, standard deviations, and distributions of data such as min/max and percentiles. 
+
+## Data Visualization
+```{python}
+import matplotlib.pyplot as plt
+
+plt.figure()
+plt.hist(marathon["Official Time"], bins=30)
+plt.xlabel("Finish Time (Seconds)")
+plt.ylabel("Count")
+plt.title("Distribution of Finish Times")
+plt.show()
+```
+Here is a plot of the distribution of finish times. It is interesting to see how this is right skewed. 
+
+## Handling of Missing/Imbalanced Data 
+```{python}
+print("NA counts: \n", marathon.isnull().sum())
+```
+```{python}
+marathon = marathon.dropna(subset=time_cols)
+```
+
+With over 25000 observations, we can simply remove the split times with incomplete values, without it causing too much harm to the model. It is important to note that I am dropping the whole row when removing the NA values, even if a runner only had one incomplete data point. 
+
+```{python}
+#Check
+#print("NA counts: \n", marathon.isnull().sum())
+```
+
