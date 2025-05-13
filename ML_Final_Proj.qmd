@@ -136,14 +136,10 @@ y= marathon['Bracket']
 ```
 
 ```{python}
-#Imports from previous time using trees, not all may be necessary
+#Imports related to tree methods
 import sklearn.model_selection as skm
-from ISLP.models import ModelSpec as MS
 from sklearn.tree import (DecisionTreeClassifier as DTC,
-                          plot_tree,
-                          export_text)
-from sklearn.metrics import (accuracy_score,
-                             log_loss)
+                          plot_tree, export_text)
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 
@@ -156,18 +152,16 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_
 ### Decision Tree
 
 ```{python}
+#Fit decision tree
 tree = DTC(max_depth=4, random_state=1000)
 tree.fit(x_train, y_train)
 
 ```
-```{python}
-print(export_text(tree, feature_names=features, show_weights=True))
-```
-This looks nice, but this barely uses any predictors
 
 ### Random Forest
 
 ```{python}
+#Fit random forest
 rf = RandomForestClassifier(n_estimators=100,max_depth=10, random_state=1000)
 rf.fit(x_train, y_train)
 ```
@@ -176,6 +170,7 @@ rf.fit(x_train, y_train)
 ## Model Evaluation
 
 ```{python}
+#Validate the decision tree using cross validation
 validation = skm.ShuffleSplit(n_splits=1, test_size=200, random_state=0)
 
 results = skm.cross_validate(tree, x, y, cv=validation)
@@ -183,6 +178,7 @@ results = skm.cross_validate(tree, x, y, cv=validation)
 print("Test Score:",results['test_score'])
 ```
 ```{python}
+#Identical code as before, but using the random forest model
 validation = skm.ShuffleSplit(n_splits=1, test_size=200, random_state=0)
 
 results = skm.cross_validate(rf, x, y, cv=validation)
@@ -195,4 +191,26 @@ The decision tree is more intuitive, but slightly less accurate than the random 
 
 ## Results Presentation
 
+```{python}
+#Print the tree, showing decision boundaries
+print(export_text(tree, feature_names=features, show_weights=True))
+```
+Above is the decision tree, classifying runners by their splits. Because of the high correlation to time, the later the split means it is a more significant predictor of finish time. Because of this, I also decided to fit a random forest do be able to see if the other factors could also be significant. 
+
+```{python}
+# Get important features and sort
+important = pd.Series(rf.feature_importances_, index=features).sort_values()
+
+plt.figure()
+important.plot(kind='bar')
+plt.title("Random Forest Feature Importance")
+plt.xlabel("Features")
+plt.show()
+```
+This plot above shows how important each feature is to the random forest. Surprisingly, age and sex do not appear significant at all. When looking at the accuracy scores in the previous section, it was seen that both types of trees have high accuracy scores, with random forest having a slightly higher accuracy. 
+
 ## Conclusions
+Both the decision tree and random forest had high accuracy scores, indicating that both models could predict which bracket a runner would fall into given splits and demographic data. The decision tree is able to be used as a guideline for future runners to see which split times they need to get to achieve a goal. The random forest could also be used if a runner wants a more accurate model, with less interpretability. When looking at the features used in models, it was interesting to see that age and sex were insignificant predictors, and the later splits were very significant. 
+
+## Workforce/Graduate School Preparation
+Looking into my future, I am happy I did this project. This project strengthened my skills in data collection, cleaning, analysis, and machine learning models that will be important to my future. Focusing on one question for this project allowed for deeper thought into what models could be used, and what is necessary to answer that question. I have also used qmd files to strengthen my communication skills by having text outside of code chunks, and used sections for clear documentation and organization. 
